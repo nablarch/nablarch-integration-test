@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<component-configuration
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://tis.co.jp/nablarch/component-configuration"
+    xsi:schemaLocation="http://tis.co.jp/nablarch/component-configuration  /component-configuration.xsd">
+
+  <import file="nablarch/fw/web/multipart.xml" />
+
+  <!-- ハンドラキュー構成 -->
+  <component name="webFrontController" class="nablarch.fw.web.servlet.WebFrontController">
+    <property name="handlerQueue">
+      <list>
+        <component class="nablarch.fw.handler.GlobalErrorHandler"/>
+        <component class="nablarch.fw.web.handler.HttpResponseHandler"/>
+        <component name="errorHandler" class="nablarch.fw.web.handler.HttpErrorHandler" />
+        <component-ref name="multipartHandler" />
+        <component name="packageMapping" class="nablarch.fw.web.handler.HttpRequestJavaPackageMapping">
+          <property name="baseUri" value="/action/"/>
+          <property name="basePackage" value="nablarch.fw.web.app"/>
+        </component>
+      </list>
+    </property>
+  </component>
+</component-configuration>

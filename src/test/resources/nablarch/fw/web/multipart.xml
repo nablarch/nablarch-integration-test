@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<component-configuration
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://tis.co.jp/nablarch/component-configuration"
+    xsi:schemaLocation="http://tis.co.jp/nablarch/component-configuration  /component-configuration.xsd">
+
+  <component name="multipartHandler" class="nablarch.fw.web.upload.MultipartHandler">
+    <property name="uploadSettings">
+      <component class="nablarch.fw.web.upload.UploadSettings">
+        <property name="autoCleaning" value="true" />
+        <property name="contentLengthLimit" value="1000" />
+      </component>
+    </property>
+  </component>
+
+</component-configuration>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+
+  <context-param>
+    <!-- DIコンテナの設定ファイルパス -->
+    <param-name>di.config</param-name>
+    <param-value>nablarch/fw/web/new-handler-queue-configuration.xml</param-value>
+  </context-param>
+
+  <context-param>
+    <!-- 設定重複時の動作設定 -->
+    <param-name>di.duplicate-definition-policy</param-name>
+    <param-value>OVERRIDE</param-value>
+  </context-param>
+
+  <listener>
+    <listener-class>nablarch.fw.web.servlet.NablarchServletContextListener</listener-class>
+  </listener>
+
+  <display-name>old version handler</display-name>
+  <description>old version handler</description>
+
+  <filter>
+    <filter-name>entryPoint</filter-name>
+    <filter-class>nablarch.fw.web.servlet.RepositoryBasedWebFrontController</filter-class>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>entryPoint</filter-name>
+    <url-pattern>/action/*</url-pattern>
+    <url-pattern>/</url-pattern>
+  </filter-mapping>
+
+  <jsp-config>
+    <jsp-property-group>
+      <url-pattern>*.jsp</url-pattern>
+      <el-ignored>false</el-ignored>
+      <page-encoding>UTF-8</page-encoding>
+      <scripting-invalid>false</scripting-invalid>
+    </jsp-property-group>
+  </jsp-config>
+  
+  <mime-mapping>
+    <extension>js</extension>
+    <mime-type>application/javascript</mime-type>
+  </mime-mapping>
+</web-app>

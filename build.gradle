@@ -1,0 +1,48 @@
+group = 'com.nablarch.dev'
+version = '1.0.0'
+description = '結合テスト'
+
+buildscript {
+  repositories {
+    mavenLocal()
+    maven { url "${developLibUrl}" }
+    jcenter()
+  }
+  dependencies {
+    classpath "com.nablarch.dev:nablarch-gradle-plugin:${nablarchGradlePluginVersion}"
+    classpath "io.spring.gradle:dependency-management-plugin:0.5.6.RELEASE"
+  }
+}
+
+apply plugin: 'com.nablarch.dev.nablarch-build'
+apply plugin: 'com.nablarch.dev.nablarch-maven-deploy'
+apply plugin: "io.spring.dependency-management"
+apply plugin: 'com.nablarch.dev.nablarch-sonarqube'
+
+// ビルド時のJavaバージョンを指定する
+sourceCompatibility=JavaVersion.VERSION_1_7
+targetCompatibility=JavaVersion.VERSION_1_7
+
+dependencyManagement {
+  imports {
+    mavenBom 'com.nablarch.profile:nablarch-bom:5u6'
+  }
+  applyMavenExclusions false
+}
+
+dependencies {
+  testCompile 'com.nablarch.profile:nablarch-all-in-one:5u6'
+
+  testCompile 'org.jmockit:jmockit:1.13'
+  testCompile 'junit:junit:4.12'
+  testCompile 'com.nablarch.dev:nablarch-test-support:0.0.5'
+  testCompile 'com.google.http-client:google-http-client:1.19.0'
+
+  testCompile 'org.glassfish.main.extras:glassfish-embedded-all:4.1'
+  testCompile 'org.jboss.arquillian.junit:arquillian-junit-container:1.0.0.Final'
+  testCompile 'org.jboss.arquillian.container:arquillian-glassfish-embedded-3.1:1.0.0.CR4'
+}
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '2.11'
+}

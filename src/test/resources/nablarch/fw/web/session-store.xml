@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<component-configuration
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://tis.co.jp/nablarch/component-configuration"
+    xsi:schemaLocation="http://tis.co.jp/nablarch/component-configuration  /component-configuration.xsd">
+
+  <component name="sessionManager" class="nablarch.common.web.session.SessionManager">
+    <property name="defaultStoreName" value="hidden" />
+    <property name="availableStores">
+      <list>
+        <component class="nablarch.common.web.session.store.HiddenStore">
+          <property name="expires" value="1800"/>
+          <property name="parameterName" value="_HIDDEN_STORE_"/>
+          <property name="stateEncoder">
+            <component class="nablarch.common.web.session.encoder.JavaSerializeEncryptStateEncoder">
+              <property name="encryptor">
+                <component class="nablarch.common.encryption.AesEncryptor">
+                  <property name="key" value="1234567890123456" />
+                  <property name="iv" value="9876543210987654" />
+                </component>
+              </property>
+            </component>
+          </property>
+        </component>
+      </list>
+    </property>
+  </component>
+
+  <component name="sessionStoreHandler" class="nablarch.common.web.session.SessionStoreHandler">
+    <property name="sessionManager" ref="sessionManager"/>
+  </component>
+
+</component-configuration>
