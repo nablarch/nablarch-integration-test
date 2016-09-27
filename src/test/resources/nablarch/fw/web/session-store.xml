@@ -29,5 +29,7 @@
   <component name="sessionStoreHandler" class="nablarch.common.web.session.SessionStoreHandler">
     <property name="sessionManager" ref="sessionManager"/>
   </component>
+    
+  <component name="systemTimeProvider" class="nablarch.core.date.BasicSystemTimeProvider" />
 
 </component-configuration>
