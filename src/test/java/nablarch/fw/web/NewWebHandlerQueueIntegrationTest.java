@@ -48,6 +48,12 @@ public class NewWebHandlerQueueIntegrationTest extends WebHandlerQueueIntegratio
     @Test
     @RunAsClient
     public void testMultipart_session() throws Exception {
+        // NABLARCH_SIDやJSESSIONIDを生成するため、リクエストを送信
+        HttpRequest request = httpTransport.createRequestFactory()
+                .buildGetRequest(new GenericUrl(new URL(baseUrl, "action/MultipartAction/PutSession")));
+        HttpResponse response = request.execute();
+
+        // アップロードするファイルを作る
         File file = folder.newFile("multipart.txt");
 
         // hiddenStoreのパラメータを設定
@@ -56,10 +62,10 @@ public class NewWebHandlerQueueIntegrationTest extends WebHandlerQueueIntegratio
         part.setHeaders(new HttpHeaders().set("Content-Disposition", String.format("form-data; name=\"%s\"", "_HIDDEN_STORE_")));
         content.addPart(part);
 
-        HttpRequest request = httpTransport.createRequestFactory()
+        request = httpTransport.createRequestFactory()
                 .buildPostRequest(new GenericUrl(new URL(baseUrl, "action/MultipartAction/GetSession")), content);
-        request.getHeaders().setCookie("NABLARCH_SID=1234568d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92");
-        HttpResponse response = request.execute();
+        request.getHeaders().set("Cookie", response.getHeaders().get("Set-Cookie"));
+        response = request.execute();
 
         assertThat(response.getStatusCode(), is(200));
         assertThat(response.parseAsString(), is("value"));

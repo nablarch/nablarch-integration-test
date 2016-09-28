@@ -38,4 +38,16 @@ public class MultipartAction {
         String key = SessionUtil.get(context, "key");
         return new HttpResponse().write(key);
     }
+
+    /**
+     * セッションストアに値を保存する。
+     *
+     * @param request リクエスト
+     * @param context 実行コンテキスト
+     * @return レスポンス
+     */
+    public HttpResponse doPutSession(HttpRequest request, ExecutionContext context) {
+        SessionUtil.put(context, "key", "value");
+        return new HttpResponse();
+    }
 }
