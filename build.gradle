@@ -1,5 +1,5 @@
 group = 'com.nablarch.dev'
-version = '1.0.0'
+version = '1.0.1'
 description = '結合テスト'
 
 buildscript {
@@ -20,18 +20,18 @@ apply plugin: "io.spring.dependency-management"
 apply plugin: 'com.nablarch.dev.nablarch-sonarqube'
 
 // ビルド時のJavaバージョンを指定する
-sourceCompatibility=JavaVersion.VERSION_1_7
-targetCompatibility=JavaVersion.VERSION_1_7
+sourceCompatibility=JavaVersion.VERSION_1_6
+targetCompatibility=JavaVersion.VERSION_1_6
 
 dependencyManagement {
   imports {
-    mavenBom 'com.nablarch.profile:nablarch-bom:5u6'
+    mavenBom 'com.nablarch.profile:nablarch-bom:5u7'
   }
   applyMavenExclusions false
 }
 
 dependencies {
-  testCompile 'com.nablarch.profile:nablarch-all-in-one:5u6'
+  testCompile 'com.nablarch.profile:nablarch-all-in-one:5u7'
 
   testCompile 'org.jmockit:jmockit:1.13'
   testCompile 'junit:junit:4.12'
