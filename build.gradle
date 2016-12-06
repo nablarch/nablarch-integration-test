@@ -25,13 +25,13 @@ targetCompatibility=JavaVersion.VERSION_1_6
 
 dependencyManagement {
   imports {
-    mavenBom 'com.nablarch.profile:nablarch-bom:5u7'
+    mavenBom 'com.nablarch.profile:nablarch-bom:5u8'
   }
   applyMavenExclusions false
 }
 
 dependencies {
-  testCompile 'com.nablarch.profile:nablarch-all-in-one:5u7'
+  testCompile 'com.nablarch.profile:nablarch-all-in-one'
 
   testCompile 'org.jmockit:jmockit:1.13'
   testCompile 'junit:junit:4.12'
