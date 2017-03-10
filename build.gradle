@@ -25,7 +25,7 @@ targetCompatibility=JavaVersion.VERSION_1_6
 
 dependencyManagement {
   imports {
-    mavenBom 'com.nablarch.profile:nablarch-bom:5u8'
+    mavenBom 'com.nablarch.profile:nablarch-bom:5u9'
   }
   applyMavenExclusions false
 }
