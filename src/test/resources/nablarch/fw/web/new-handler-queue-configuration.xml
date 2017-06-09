@@ -7,15 +7,23 @@
   <import file="nablarch/fw/web/session-store.xml" />
   <import file="nablarch/fw/web/multipart.xml" />
 
+  <component class="nablarch.common.web.tag.CustomTagConfig" name="customTagConfig">
+    <property name="useHiddenEncryption" value="false" />
+  </component>
+
   <!-- ハンドラキュー構成 -->
   <component name="webFrontController" class="nablarch.fw.web.servlet.WebFrontController">
     <property name="handlerQueue">
       <list>
         <component class="nablarch.fw.handler.GlobalErrorHandler"/>
         <component class="nablarch.fw.web.handler.HttpResponseHandler"/>
+        <component class="nablarch.fw.web.handler.SecureHandler"/>
         <component-ref name="multipartHandler" />
         <component-ref name="sessionStoreHandler" />
+        <component class="nablarch.fw.web.handler.NormalizationHandler"/>
+        <component class="nablarch.fw.web.handler.ForwardingHandler"/>
         <component name="errorHandler" class="nablarch.fw.web.handler.HttpErrorHandler" />
+        <component class="nablarch.common.web.handler.NablarchTagHandler"/>
         <component name="packageMapping" class="nablarch.fw.web.handler.HttpRequestJavaPackageMapping">
           <property name="baseUri" value="/action/"/>
           <property name="basePackage" value="nablarch.fw.web.app"/>
