@@ -32,14 +32,16 @@ dependencyManagement {
 
 dependencies {
   testCompile 'com.nablarch.profile:nablarch-all-in-one'
+  
+  testCompile 'com.nablarch.framework:nablarch-fw-web:1.4.2'
 
   testCompile 'org.jmockit:jmockit:1.13'
   testCompile 'junit:junit:4.12'
-  testCompile 'com.google.http-client:google-http-client:1.19.0'
+  testCompile 'com.google.http-client:google-http-client:1.22.0'
 
-  testCompile 'org.glassfish.main.extras:glassfish-embedded-all:4.1'
-  testCompile 'org.jboss.arquillian.junit:arquillian-junit-container:1.0.0.Final'
-  testCompile 'org.jboss.arquillian.container:arquillian-glassfish-embedded-3.1:1.0.0.CR4'
+  testCompile 'org.glassfish.main.extras:glassfish-embedded-all:4.1.2'
+  testCompile 'org.jboss.arquillian.junit:arquillian-junit-container:1.1.13.Final'
+  testCompile 'org.jboss.arquillian.container:arquillian-glassfish-embedded-3.1:1.0.0.Final'
 }
 
 task wrapper(type: Wrapper) {
