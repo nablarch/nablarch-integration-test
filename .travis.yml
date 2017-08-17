@@ -1,3 +1,4 @@
+dist: precise
 language: java
 branches:
   only:
@@ -6,6 +7,8 @@ branches:
 before_install:
 - chmod +x gradlew
 install: true
+jdk:
+  - oraclejdk7
 cache:
   directories:
   - $HOME/.gradle/caches/
@@ -13,7 +16,6 @@ cache:
 script:
 - git clone -b master https://github.com/nablarch/nablarch-ci-script.git $HOME/build-script/
   && chmod +x $HOME/build-script/travis-ci/*.sh
-- $HOME/build-script/travis-ci/install-oracle-jdk6.sh
 - $HOME/build-script/travis-ci/nablarch-build-nodeploy.sh
 - $HOME/build-script/travis-ci/upload-test-report.sh
 before_cache:
