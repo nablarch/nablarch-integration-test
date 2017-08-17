@@ -1,5 +1,9 @@
 # nablarch-integration-test 
 
+| master | develop |
+|:-----------|:------------|
+|[![Build Status](https://travis-ci.org/nablarch/nablarch-integration-test.svg?branch=master)](https://travis-ci.org/nablarch/nablarch-integration-test)|[![Build Status](https://travis-ci.org/nablarch/nablarch-integration-test.svg?branch=develop)](https://travis-ci.org/nablarch/nablarch-integration-test)|
+
 ## 依存ライブラリ
 
 本モジュールのコンパイルまたはテストには、下記ライブラリを手動でローカルリポジトリへインストールする必要があります。
