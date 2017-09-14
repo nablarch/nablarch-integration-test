@@ -33,7 +33,7 @@ dependencyManagement {
 dependencies {
   testCompile 'com.nablarch.profile:nablarch-all-in-one'
   
-  testCompile 'com.nablarch.framework:nablarch-fw-web:1.4.2'
+  testCompile 'com.nablarch.framework:nablarch-fw-web'
 
   testCompile 'org.jmockit:jmockit:1.13'
   testCompile 'junit:junit:4.12'
