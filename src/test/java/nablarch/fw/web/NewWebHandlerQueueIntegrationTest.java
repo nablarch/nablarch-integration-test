@@ -63,9 +63,10 @@ public class NewWebHandlerQueueIntegrationTest extends WebHandlerQueueIntegratio
      * <p/>
      * Hiddenセッションには既に以下の情報が格納されていることを前提とする。
      * <ul>
-     *     <li>名前："key"</li>
-     *     <li>値："value"</li>
+     * <li>名前："key"</li>
+     * <li>値："value"</li>
      * </ul>
+     *
      * @throws Exception
      */
     @Test
@@ -83,13 +84,13 @@ public class NewWebHandlerQueueIntegrationTest extends WebHandlerQueueIntegratio
         // (hiddenStore#save相当の処理行い暗号化した後に値を設定する)
         String nablarchSid = "";
         List<String> headerStringValues = response.getHeaders().getHeaderStringValues("set-cookie");
-        for(String rawCookie : headerStringValues){
-            if(rawCookie.startsWith("NABLARCH_SID=")){
-                nablarchSid = rawCookie.replaceAll("NABLARCH_SID=","").replaceAll("; Path=/; HttpOnly","");
+        for (String rawCookie : headerStringValues) {
+            if (rawCookie.startsWith("NABLARCH_SID=")) {
+                nablarchSid = rawCookie.replaceAll("NABLARCH_SID=", "").replaceAll("; Path=/; HttpOnly", "");
             }
         }
         List<SessionEntry> entries = new ArrayList<SessionEntry>();
-        SessionEntry sessionEntry = new SessionEntry("key", "value",null);
+        SessionEntry sessionEntry = new SessionEntry("key", "value", null);
         entries.add(sessionEntry);
         byte[] encrypted = aesEncryptor.encrypt(aesEncryptor.generateContext(), serialize(nablarchSid, entries));
         MultipartContent content = createMultipartContent(file);
@@ -108,11 +109,11 @@ public class NewWebHandlerQueueIntegrationTest extends WebHandlerQueueIntegratio
 
     /**
      * セッションID、セッションエントリのシリアライズを行う。
-     *
+     * <p>
      * (HiddenStore#serializeと同一の処理)
      *
      * @param sessionId 現在のセッションID
-     * @param entries セッションエントリ
+     * @param entries   セッションエントリ
      * @return シリアライズ結果
      */
     private byte[] serialize(String sessionId, List<SessionEntry> entries) {
