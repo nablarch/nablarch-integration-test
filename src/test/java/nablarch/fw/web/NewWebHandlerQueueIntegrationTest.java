@@ -6,16 +6,30 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.MultipartContent;
+import nablarch.common.encryption.AesEncryptor;
+import nablarch.common.web.session.EncodeException;
+import nablarch.common.web.session.SessionEntry;
+import nablarch.common.web.session.encoder.JavaSerializeEncryptStateEncoder;
+import nablarch.core.util.FileUtil;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import javax.xml.bind.DatatypeConverter;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -28,6 +42,15 @@ import static org.junit.Assert.assertThat;
  */
 @RunWith(Arquillian.class)
 public class NewWebHandlerQueueIntegrationTest extends WebHandlerQueueIntegrationTestSupport {
+
+    private AesEncryptor aesEncryptor;
+
+    @Before
+    public void before() {
+        //session-store.xmlに定義したものと同一のキーを指定。
+        aesEncryptor.setKey("1234567890123456");
+        aesEncryptor.setIv("9876543210987654");
+    }
 
     @Deployment
     public static WebArchive createDeployment() {
@@ -57,8 +80,20 @@ public class NewWebHandlerQueueIntegrationTest extends WebHandlerQueueIntegratio
         File file = folder.newFile("multipart.txt");
 
         // hiddenStoreのパラメータを設定
+        // (hiddenStore#save相当の処理行い暗号化した後に値を設定する)
+        String nablarchSid = "";
+        List<String> headerStringValues = response.getHeaders().getHeaderStringValues("set-cookie");
+        for(String rawCookie : headerStringValues){
+            if(rawCookie.startsWith("NABLARCH_SID=")){
+                nablarchSid = rawCookie.replaceAll("NABLARCH_SID=","").replaceAll("; Path=/; HttpOnly","");
+            }
+        }
+        List<SessionEntry> entries = new ArrayList<SessionEntry>();
+        SessionEntry sessionEntry = new SessionEntry("key", "value",null);
+        entries.add(sessionEntry);
+        byte[] encrypted = aesEncryptor.encrypt(aesEncryptor.generateContext(), serialize(nablarchSid, entries));
         MultipartContent content = createMultipartContent(file);
-        MultipartContent.Part part = new MultipartContent.Part(new ByteArrayContent(null, "AANrZXkAAAAQABBqYXZhLmxhbmcuU3RyaW5njmDwr5d2mkeZFXpTJHZGxg==".getBytes()));
+        MultipartContent.Part part = new MultipartContent.Part(new ByteArrayContent(null, DatatypeConverter.printBase64Binary(encrypted).getBytes()));
         part.setHeaders(new HttpHeaders().set("Content-Disposition", String.format("form-data; name=\"%s\"", "_HIDDEN_STORE_")));
         content.addPart(part);
 
@@ -69,6 +104,79 @@ public class NewWebHandlerQueueIntegrationTest extends WebHandlerQueueIntegratio
 
         assertThat(response.getStatusCode(), is(200));
         assertThat(response.parseAsString(), is("value"));
+    }
+
+    /**
+     * セッションID、セッションエントリのシリアライズを行う。
+     *
+     * (HiddenStore#serializeと同一の処理)
+     *
+     * @param sessionId 現在のセッションID
+     * @param entries セッションエントリ
+     * @return シリアライズ結果
+     */
+    private byte[] serialize(String sessionId, List<SessionEntry> entries) {
+        // セッションID
+        byte[] sidBytes = sessionId.getBytes(Charset.forName("UTF-8"));
+        // セッションIDバイト長
+        byte[] sidLengthBytes = ByteBuffer.allocate(Integer.SIZE / Byte.SIZE).putInt(sidBytes.length).array();
+        // セッションエントリ
+        byte[] entriesBytes = encode(entries);
+        return concat(sidLengthBytes, sidBytes, entriesBytes);
+    }
+
+    /**
+     * セッションエントリリストをエンコードする。
+     *
+     * @param entries セッションエントリリスト
+     * @return バイト配列
+     */
+    private byte[] encode(List<SessionEntry> entries) {
+        JavaSerializeEncryptStateEncoder<AesEncryptor.AesContext> stateEncoder = new JavaSerializeEncryptStateEncoder<AesEncryptor.AesContext>();
+        stateEncoder.setEncryptor(aesEncryptor);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(2048);
+        DataOutputStream dos = new DataOutputStream(baos);
+        try {
+            for (SessionEntry entry : entries) {
+                dos.writeUTF(entry.getKey());
+                Object obj = entry.getValue();
+                if (obj == null) {
+                    dos.writeInt(0);
+                } else {
+                    byte[] encoded = stateEncoder.encode(obj);
+                    dos.writeInt(encoded.length);
+                    dos.writeUTF(obj.getClass().getName());
+                    dos.write(encoded);
+                }
+            }
+        } catch (IOException e) {
+            throw new EncodeException(e);
+        }
+        return baos.toByteArray();
+    }
+
+    /**
+     * バイト配列の結合を行う。
+     *
+     * @param byteArrays 結合対象のバイト配列
+     * @return 結合後のバイト配列
+     */
+    private byte[] concat(byte[]... byteArrays) {
+        int totalLenght = 0;
+        for (byte[] bs : byteArrays) {
+            totalLenght += bs.length;
+        }
+        ByteArrayOutputStream dest = new ByteArrayOutputStream(totalLenght);
+        try {
+            for (byte[] byteArray : byteArrays) {
+                dest.write(byteArray);
+            }
+        } catch (IOException e) {
+            throw new EncodeException(e);  // 発生しない
+        } finally {
+            FileUtil.closeQuietly(dest);
+        }
+        return dest.toByteArray();
     }
 }
 
