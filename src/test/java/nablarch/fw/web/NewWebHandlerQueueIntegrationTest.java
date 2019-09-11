@@ -48,6 +48,7 @@ public class NewWebHandlerQueueIntegrationTest extends WebHandlerQueueIntegratio
     @Before
     public void before() {
         //session-store.xmlに定義したものと同一のキーを指定。
+        aesEncryptor = new AesEncryptor();
         aesEncryptor.setKey("1234567890123456");
         aesEncryptor.setIv("9876543210987654");
     }
