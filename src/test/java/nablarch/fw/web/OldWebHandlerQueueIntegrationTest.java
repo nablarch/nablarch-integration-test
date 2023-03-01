@@ -4,6 +4,7 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.runner.RunWith;
 
 import java.io.File;
@@ -19,7 +20,22 @@ public class OldWebHandlerQueueIntegrationTest extends WebHandlerQueueIntegratio
 
     @Deployment
     public static WebArchive createDeployment() {
-        return ShrinkWrap.create(WebArchive.class)
+        final WebArchive archive = ShrinkWrap.create(WebArchive.class)
+                .addPackage("nablarch.fw.web.app")
+                .addPackage("nablarch.fw.web.upload")
+                .addAsLibraries(
+                        Maven.configureResolver()
+                                .workOffline()
+                                .loadPomFromFile("pom.xml")
+                                .importTestDependencies()
+                                .resolve()
+                                .withTransitivity()
+                                .asFile()
+                )
                 .setWebXML(new File("src/test/webapp/WEB-INF/old-handler-queue-web.xml"));
+
+        addTestResources(archive);
+        
+        return archive;
     }
 }

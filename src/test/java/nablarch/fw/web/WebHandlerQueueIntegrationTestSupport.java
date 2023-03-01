@@ -4,10 +4,20 @@ import static junit.framework.TestCase.fail;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.FileContent;
@@ -19,6 +29,7 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.MultipartContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import nablarch.core.util.Builder;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 
@@ -26,7 +37,10 @@ import nablarch.fw.web.upload.CustomMultipartContent;
 import nablarch.fw.web.upload.MockMultipartParser;
 import nablarch.test.support.log.app.OnMemoryLogWriter;
 
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -46,6 +60,9 @@ public abstract class WebHandlerQueueIntegrationTestSupport {
 
     protected HttpTransport httpTransport = new NetHttpTransport();
 
+    private PrintStream originalStandardOutput;
+    private ByteArrayOutputStream bufferStandardOutput;
+
     @Before
     public void setUp() throws Exception {
         // アップロードファイルが作成されていれば削除する。
@@ -54,10 +71,39 @@ public abstract class WebHandlerQueueIntegrationTestSupport {
             file.delete();
         }
 
-        // ログをクリア
-        OnMemoryLogWriter.clear();
+        originalStandardOutput = System.out;
+        bufferStandardOutput = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(bufferStandardOutput, true, StandardCharsets.UTF_8));
     }
 
+    @After
+    public void tearDown() {
+        System.setOut(originalStandardOutput);
+    }
+
+    /**
+     * src/test/resources 配下の全てのファイルを WebArchive の WEB-INF の下に配置する。
+     * @param archive WebArchive
+     */
+    protected static void addTestResources(WebArchive archive) {
+        Path srcTestResources = Path.of("src/test/resources");
+        Path classes = Path.of("classes");
+
+        try {
+            Files.walkFileTree(srcTestResources, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                    final Path relativePath = srcTestResources.relativize(file);
+                    final Path targetPath = classes.resolve(relativePath);
+                    archive.addAsWebInfResource(file.toFile(), targetPath.toString().replace('\\', '/'));
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+    
     /**
      * マルチパートリクエストが正しく処理されることを確認するケース。
      * @throws Exception
@@ -75,7 +121,7 @@ public abstract class WebHandlerQueueIntegrationTestSupport {
         assertThat(response.getStatusCode(), is(200));
         assertThat(response.parseAsString(), is("SUCCESS"));
         assertThat(new File(System.getProperty("java.io.tmpdir"), "uploadFile").exists(), is(true));
-        OnMemoryLogWriter.assertLogContains("writer.memory", "name='uploadFile', fileName='multipart.txt', contentType='application/octet-stream'");
+        assertLogContains("name='uploadFile', fileName='multipart.txt', contentType='application/octet-stream'");
     }
 
     /**
@@ -116,6 +162,12 @@ public abstract class WebHandlerQueueIntegrationTestSupport {
         }
     }
 
+    // エラーを起こすためにモックをつかっているが、
+    // サーバーを Wildfly にかえるとモック化ができずにエラーが発生しなくなった。
+    // 可能性として、 Wildfly ではデプロイされたWebアプリケーションのクラスは
+    // 別のクラスローダーでロードされるので、うまくモック化できない可能性が考えられる。
+    // モックを使わずに同様のエラーを起こす方法がないため、テストを Ignore で除外している。
+    // 将来 EE 10 に対応した GlassFish が Arquillian で使えるようになったときに Ignore を外してテストを実施すること。
     /**
      * マルチパートリクエストにて、一時ファイルの作成に失敗した場合、
      * INTERNAL SERVER ERRORが返却されることを確認するケース。
@@ -123,6 +175,7 @@ public abstract class WebHandlerQueueIntegrationTestSupport {
      */
     @Test
     @RunAsClient
+    @Ignore
     public void testMultipart_write_failed() throws Exception {
 
         // 一時ファイルの作成時にエラーが発生するようにモックを定義。
@@ -199,5 +252,23 @@ public abstract class WebHandlerQueueIntegrationTestSupport {
         }
         filewriter.close();
         return file;
+    }
+
+    /**
+     * 出力されたログに指定したメッセージが全て含まれることを検証する。
+     * @param expectedMessages 出力されていることを期待するメッセージ
+     */
+    private void assertLogContains(String... expectedMessages) {
+        String actualLogText = bufferStandardOutput.toString(StandardCharsets.UTF_8);
+
+        for (String expectedMessage : expectedMessages) {
+            if (!actualLogText.contains(expectedMessage)) {
+                throw new AssertionError(Builder.concat(
+                        "expected log not found. \n",
+                        "expected = ", Arrays.toString(expectedMessages), "\n",
+                        "actual   = ", actualLogText)
+                );
+            }
+        }
     }
 }
