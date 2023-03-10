@@ -6,6 +6,7 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.MultipartContent;
+import jakarta.xml.bind.DatatypeConverter;
 import nablarch.common.encryption.AesEncryptor;
 import nablarch.common.web.session.EncodeException;
 import nablarch.common.web.session.SessionEntry;
@@ -16,11 +17,11 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -55,10 +56,25 @@ public class NewWebHandlerQueueIntegrationTest extends WebHandlerQueueIntegratio
 
     @Deployment
     public static WebArchive createDeployment() {
-        return ShrinkWrap.create(WebArchive.class)
+        final WebArchive archive = ShrinkWrap.create(WebArchive.class)
+                .addPackage("nablarch.fw.web.app")
+                .addPackage("nablarch.fw.web.upload")
+                .addAsLibraries(
+                    Maven.configureResolver()
+                        .workOffline()
+                        .loadPomFromFile("pom.xml")
+                        .importTestDependencies()
+                        .resolve()
+                        .withTransitivity()
+                        .asFile()
+                )
                 .setWebXML(new File("src/test/webapp/WEB-INF/new-handler-queue-web.xml"));
-    }
+        
+        addTestResources(archive);
 
+        return archive;
+    }
+    
     /**
      * マルチパートリクエスト時、Hiddenセッションに格納した情報が正しく復元できることを確認するケース。
      * <p/>
@@ -87,7 +103,10 @@ public class NewWebHandlerQueueIntegrationTest extends WebHandlerQueueIntegratio
         List<String> headerStringValues = response.getHeaders().getHeaderStringValues("set-cookie");
         for (String rawCookie : headerStringValues) {
             if (rawCookie.startsWith("NABLARCH_SID=")) {
-                nablarchSid = rawCookie.replaceAll("NABLARCH_SID=", "").replaceAll("; Path=/; HttpOnly", "");
+                // GlassFish のときは Path だったが Wildfly では path になったので
+                // 正規表現で path, Path のどちらでもマッチするようにしていずれのサーバーでも動くようにしている
+                nablarchSid = rawCookie.replaceAll("NABLARCH_SID=", "")
+                        .replaceAll("; [pP]ath=/; HttpOnly", "");
             }
         }
         List<SessionEntry> entries = new ArrayList<SessionEntry>();
