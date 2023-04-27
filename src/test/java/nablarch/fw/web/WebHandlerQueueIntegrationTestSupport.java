@@ -1,8 +1,24 @@
 package nablarch.fw.web;
 
-import static junit.framework.TestCase.fail;
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.assertThat;
+import com.google.api.client.http.ByteArrayContent;
+import com.google.api.client.http.FileContent;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpMediaType;
+import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.MultipartContent;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import nablarch.core.util.Builder;
+import nablarch.fw.web.upload.CustomMultipartContent;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.arquillian.test.api.ArquillianResource;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -19,31 +35,9 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 
-import com.google.api.client.http.ByteArrayContent;
-import com.google.api.client.http.FileContent;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpHeaders;
-import com.google.api.client.http.HttpMediaType;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpResponseException;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.MultipartContent;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import nablarch.core.util.Builder;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.test.api.ArquillianResource;
-
-import nablarch.fw.web.upload.CustomMultipartContent;
-import nablarch.fw.web.upload.MockMultipartParser;
-import nablarch.test.support.log.app.OnMemoryLogWriter;
-
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import static junit.framework.TestCase.fail;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 /**
  * ウェブアプリケーションにおける標準ハンドラ構成での結合テストをサポートするクラス。
@@ -159,42 +153,6 @@ public abstract class WebHandlerQueueIntegrationTestSupport {
             fail("アップロードファイルサイズが上限を超えたため、REQUEST ENTITY TOO LARGE(413)が送出される。");
         } catch (final HttpResponseException e) {
             assertThat(e.getStatusCode(), is(413));
-        }
-    }
-
-    // エラーを起こすためにモックをつかっているが、
-    // サーバーを Wildfly にかえるとモック化ができずにエラーが発生しなくなった。
-    // 可能性として、 Wildfly ではデプロイされたWebアプリケーションのクラスは
-    // 別のクラスローダーでロードされるので、うまくモック化できない可能性が考えられる。
-    // モックを使わずに同様のエラーを起こす方法がないため、テストを Ignore で除外している。
-    // 将来 EE 10 に対応した GlassFish が Arquillian で使えるようになったときに Ignore を外してテストを実施すること。
-    /**
-     * マルチパートリクエストにて、一時ファイルの作成に失敗した場合、
-     * INTERNAL SERVER ERRORが返却されることを確認するケース。
-     * @throws Exception
-     */
-    @Test
-    @RunAsClient
-    @Ignore
-    public void testMultipart_write_failed() throws Exception {
-
-        // 一時ファイルの作成時にエラーが発生するようにモックを定義。
-        new MockMultipartParser();
-
-        final File file = folder.newFile("multipart.txt");
-        try {
-            final HttpRequest request = httpTransport.createRequestFactory()
-                    .buildPostRequest(new GenericUrl(new URL(baseUrl, "action/MultipartAction/Upload")), createMultipartContent(file));
-
-            request.execute();
-            fail("一時ファイルの作成に失敗したため、INTERNAL SERVER ERROR(500)が送出される。");
-        } catch (final HttpResponseException e) {
-            assertThat(e.getStatusCode(), is(500));
-            Thread.sleep(100); // ログ出力される前にassertされるのを防ぐため
-            OnMemoryLogWriter.assertLogContains(
-                    "writer.memory",
-                    "FATAL",
-                    "[500 InternalError] java.io.IOException");
         }
     }
 
