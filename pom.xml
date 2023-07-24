@@ -20,6 +20,10 @@
     <version>6-NEXT-SNAPSHOT</version>
   </parent>
 
+  <properties>
+    <junit.additionalArgLine>--add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/sun.net.www.protocol.jar=ALL-UNNAMED --add-opens=java.naming/javax.naming.spi=ALL-UNNAMED</junit.additionalArgLine>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -30,9 +34,9 @@
         <type>pom</type>
       </dependency>
       <dependency>
-        <groupId>org.jboss.shrinkwrap.resolver</groupId>
-        <artifactId>shrinkwrap-resolver-bom</artifactId>
-        <version>${shrinkwrap-resolver-bom.version}</version>
+        <groupId>fish.payara.api</groupId>
+        <artifactId>payara-bom</artifactId>
+        <version>${payara-bom.version}</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
@@ -59,14 +63,14 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.wildfly.arquillian</groupId>
-      <artifactId>wildfly-arquillian-container-embedded</artifactId>
+      <groupId>fish.payara.arquillian</groupId>
+      <artifactId>arquillian-payara-server-embedded</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.jboss.shrinkwrap.resolver</groupId>
-      <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
-      <scope>test</scope>
+      <groupId>fish.payara.extras</groupId>
+      <artifactId>payara-embedded-all</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -81,46 +85,5 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
-  
-  <build>
-    <plugins>
-      <!-- Arquillian のテストで使用する WildFly をダウンロードする -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.5.0</version>
-        <executions>
-          <execution>
-            <id>unpack</id>
-            <phase>process-test-classes</phase>
-            <goals>
-              <goal>unpack</goal>
-            </goals>
-            <configuration>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>org.wildfly</groupId>
-                  <artifactId>wildfly-dist</artifactId>
-                  <version>${arquillian-wildfly.version}</version>
-                  <type>zip</type>
-                  <overWrite>false</overWrite>
-                  <outputDirectory>target</outputDirectory>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <systemPropertyVariables>
-            <jboss.home>${project.basedir}/target/wildfly-${arquillian-wildfly.version}</jboss.home>
-            <module.path>${project.basedir}/target/wildfly-${arquillian-wildfly.version}/modules</module.path>
-          </systemPropertyVariables>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+
 </project>
